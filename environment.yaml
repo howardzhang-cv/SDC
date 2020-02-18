@@ -16,7 +16,7 @@ dependencies:
         - pygeometry==1.5.6
         - cloudpickle==1.2.2
         - duckietown_slimremote==2018.10.1
-        - torch==1.4.0
+        - torch
         - torchvision
         - jupyter
         - numpy==1.18.0
