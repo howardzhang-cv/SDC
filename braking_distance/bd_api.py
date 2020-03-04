@@ -78,7 +78,7 @@ class Braking_Distance_Estimator():
     '''
     def simple_analytical_sd(initial_velocity, amt):
         x = ci.brake_weight * amt + ci.rolling_bias
-        f = ci.friction_constant
+        f = -ci.friction_constant
         v0 = initial_velocity
         if(f == 0):
             return float('inf')
