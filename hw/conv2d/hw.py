@@ -205,7 +205,7 @@ def conv2d_padding(img, kers):
     # can be used to find the shape of the kernels.
     #
     # !!! YOUR CODE HERE
-    j, i, kc = _
+    j, i, kc = kers[0].shape
     # !!! ==============
 
     # Now compute the padding for each axis of the image
@@ -225,9 +225,9 @@ def conv2d_padding(img, kers):
     # This value should only depend on the size of the kernel.
     #
     # !!! YOUR CODE HERE
-    y_pad = _
-    x_pad = _
-    c_pad = _
+    y_pad = i - 2
+    x_pad = j - 2
+    c_pad = 0
     # !!! ==============
 
     # numpy has a very verbose syntax for padding images
@@ -239,7 +239,7 @@ def conv2d_padding(img, kers):
     # we have to just repeat ourselves:
     padding = ((y_pad, y_pad), (x_pad, x_pad), (c_pad, c_pad))
 
-    return conv2d_many(np.pad(img, padding), kers)
+    return conv2d_many(np.pad(img, padding, mode='constant'), kers)
 
 # Stride
 def conv2d_full(img, kers, stride=1):
@@ -257,21 +257,21 @@ def conv2d_full(img, kers, stride=1):
     # We will reuse it here to pad the image:
     #
     # !!! YOUR CODE HERE
-    j, i, kc = _
+    j, i, kc = kers[0].shape
 
-    y_pad = _
-    x_pad = _
-    c_pad = _
+    y_pad = i - 2 
+    x_pad = j - 2
+    c_pad = 0
     # !!! ==============
 
     padding = ((y_pad, y_pad), (x_pad, x_pad), (c_pad, c_pad))
-    img = np.pad(img, padding)
+    img = np.pad(img, padding, mode = 'constant')
 
     # Now decompose the shape of the image into variables again, for ease of use.
     # Feel free to copy from `conv2d`!
     #
     # !!! YOUR CODE HERE
-    m, n, ic = _
+    m, n, ic = img.shape
     # !!! ==============
 
     # We will iterate over the kernels so that we can support multi-channel
@@ -281,7 +281,7 @@ def conv2d_full(img, kers, stride=1):
         # Decompose the shape of the current kernel into variables, as usual:
         #
         # !!! YOUR CODE HERE
-        j, i, kc = _
+        j, i, kc = ker.shape
         # !!! ==============
 
         # Now comes the first part that's different with stride not equal to 1.
@@ -298,8 +298,8 @@ def conv2d_full(img, kers, stride=1):
         #       part of the skeleton code first!
         #
         # !!! YOUR CODE HERE
-        Nx = _
-        Ny = _
+        Nx = (n - i + 1) // stride
+        Ny = (m - j + 1) // stride
         # !!! ==============
 
         # Do this one in two steps:
@@ -315,17 +315,17 @@ def conv2d_full(img, kers, stride=1):
         #                        0, 3, 6, 9, 12, 15, 18, ...
         #
         # !!! YOUR CODE HERE
-        feature_map = _
-        for x in _:
-            for y in _:
-                feature_map[_] = _
+        feature_map = np.empty([Ny, Nx], dtype = float)
+        for x in range(Nx):
+            for y in range(Ny):
+                feature_map[y, x] = np.sum(np.multiply(ker, img[y*stride:y*stride+j,x*stride:x*stride+i]))
         # !!! ==============
         feature_maps.append(feature_map)
 
     # Now take the code from `conv2d_many` that `np.stack`s the feature maps:
     #
     # !!! YOUR CODE HERE
-    stacked_feature_maps = np.stack(feature_maps, axis=_)
+    stacked_feature_maps = np.stack(feature_maps, axis=2)
     # !!! ==============
 
     return stacked_feature_maps
@@ -361,21 +361,22 @@ def maxpool2d(img, size=3, stride=3):
     # don't re-implement everything, just copy your old code!!!
     #
     # !!! YOUR CODE HERE
-    y_pad = _
-    x_pad = _
-    c_pad = _
+    
+    y_pad = i - 2 
+    x_pad = j - 2
+    c_pad = 0
 
     padding = ((y_pad, y_pad), (x_pad, x_pad), (c_pad, c_pad))
-    img = np.pad(img, padding)
+    img = np.pad(img, padding, mode = 'constant')
 
-    m, n, ic = _
+    m, n, ic = img.shape
 
-    Nx = _
-    Ny = _
-
-    feature_map = _
-    for x in _:
-        for y in _:
-            feature_map[_] = _
-    # !!! ==============
+    Nx = (n - i + 1) // stride
+    Ny = (m - j + 1) // stride
+    
+    feature_map = np.empty([Ny, Nx], dtype = float)
+    for x in range(Nx):            
+        for y in range(Ny):
+            feature_map[y, x] = np.max(img[y*stride:y*stride+j,x*stride:x*stride+i])
+    
     return feature_map
