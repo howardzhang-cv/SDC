@@ -21,8 +21,8 @@ def conv2d_grayscale(img, ker):
     # Here is the numpy documentation of `.shape`:
     # https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.shape.html
     # !!! YOUR CODE HERE
-    j, i = _
-    m, n = _
+    j, i = ker.shape
+    m, n = img.shape
     # !!! ==============
 
     # Now compute the feature map size. See slide 85 for a reference.
@@ -31,8 +31,8 @@ def conv2d_grayscale(img, ker):
     # that are a little smaller than those of the image.
     #
     # !!! YOUR CODE HERE
-    Nx = _
-    Ny = _
+    Nx = n - i + 1
+    Ny = m - j + 1
     # !!! ==============
 
     # Define an empty numpy array of the right size and type for the feature map.
@@ -45,7 +45,7 @@ def conv2d_grayscale(img, ker):
     # why the type is what it is. Hint: think about the format of our image data
     #
     # !!! YOUR CODE HERE
-    feature_map = _
+    feature_map = np.empty([Ny, Nx], dtype = float)
     # !!! ==============
 
     # Now we just need to iterate over the possible kernel locations,
@@ -72,9 +72,9 @@ def conv2d_grayscale(img, ker):
     # Store the result in the feature_map array.
     #
     # !!! YOUR CODE HERE
-    for x in _:
-        for y in _:
-            feature_map[_, _] = _
+    for x in range(Nx):
+        for y in range(Ny):
+            feature_map[y, x] = np.sum(np.multiply(ker, img[y:y+j,x:x+i]))
     # !!! ==============
 
     return feature_map
@@ -97,8 +97,8 @@ def conv2d(img, ker):
     # about the number of channels that the image and the kernel have.
     #
     # !!! YOUR CODE HERE
-    j, i, kc = _
-    m, n, ic = _
+    j, i, kc = ker.shape
+    m, n, ic = img.shape
     # !!! ==============
 
     # Sanity check!
@@ -109,7 +109,7 @@ def conv2d(img, ker):
     # Use an `assert` statement to verify this.
     #
     # !!! YOUR CODE HERE
-    assert kc ???????? ic
+    assert kc == ic
     # !!! ==============
 
     # Define the size of the output feature map again.
@@ -120,15 +120,15 @@ def conv2d(img, ker):
     #
     #
     # !!! YOUR CODE HERE
-    Nx = _
-    Ny = _
-    Nc = _
+    Nx = n - i + 1
+    Ny = m - j + 1
+    Nc = kc
     # !!! ==============
 
     # Create an empty array for the feature map again.
     #
     # !!! YOUR CODE HERE
-    feature_map = _
+    feature_map = np.empty([Ny, Nx], dtype = float)
     # !!! ==============
 
     # Iterate over the valid kernel placements and compute the convolution.
@@ -137,10 +137,10 @@ def conv2d(img, ker):
     # Don't forget that the image data _and_ the kernel now have
     # _multiple channels_!
     #
-    # !!! YOUR CODE HERE
-    for x in _:
-        for y in _:
-            feature_map[_] = _
+    # !!! YOUR CODE HERE   
+    for x in range(Nx):
+        for y in range(Ny):
+            feature_map[y, x] += np.sum(np.multiply(ker, img[y:y+j,x:x+i]))
     # !!! ==============
 
     return feature_map
@@ -162,7 +162,7 @@ def conv2d_many(img, kers):
     # but you can use a for loop or any other way of iterating over lists.
     #
     # !!! YOUR CODE HERE
-    feature_maps = _
+    feature_maps = [conv2d(img, i) for i in kers]
     # !!! ==============
 
     # Now we need to stack the feature maps in the channel dimension.
@@ -179,7 +179,7 @@ def conv2d_many(img, kers):
     # Hint: look at `stack_kernel` from the Color section.
     #
     # !!! YOUR CODE HERE
-    stacked_feature_maps = np.stack(feature_maps, axis=_)
+    stacked_feature_maps = np.stack(feature_maps, axis=2)
     # !!! ==============
 
     return stacked_feature_maps

@@ -144,8 +144,9 @@ class Car_Interface():
             '''
             model_inp = [0, 0, 0]
 
-            #CODE HERE (Delete exception too)
-            raise Exception("You forgot to fill Complex Input Formulation in the Controller Model")
+            model_inp[0] = accel_amt
+            model_inp[1] = brake_amt
+            model_inp[2] = velocity
 
             self.accel = self.complex_accel_fcn.predict([model_inp])
 
