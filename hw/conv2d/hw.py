@@ -225,8 +225,8 @@ def conv2d_padding(img, kers):
     # This value should only depend on the size of the kernel.
     #
     # !!! YOUR CODE HERE
-    y_pad = i - 2
-    x_pad = j - 2
+    y_pad = (i - 1) // 2 
+    x_pad = (j - 1) // 2
     c_pad = 0
     # !!! ==============
 
@@ -362,8 +362,8 @@ def maxpool2d(img, size=3, stride=3):
     #
     # !!! YOUR CODE HERE
     
-    y_pad = i - 2 
-    x_pad = j - 2
+    y_pad = (i - 1) // 2 
+    x_pad = (j - 1) // 2
     c_pad = 0
 
     padding = ((y_pad, y_pad), (x_pad, x_pad), (c_pad, c_pad))
