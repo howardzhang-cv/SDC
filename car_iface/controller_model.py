@@ -142,11 +142,19 @@ class Car_Interface():
             The ouptut is the predicted acceleration which should
             account for all internal dynamics.
             '''
-            model_inp = [0, 0, 0]
+            #model_inp = [0, 0, 0]
+            if (pedal == None):
+                accel_amt = 0
+                brake_amt = 0
+            elif (pedal == self.ACCELERATOR):
+                accel_amt = amount
+                brake_amt = 0
+            elif (pedal == self.BRAKE):
+                accel_amt = 0
+                brake_amt = amount
 
-            model_inp[0] = accel_amt
-            model_inp[1] = brake_amt
-            model_inp[2] = velocity
+            model_inp = [accel_amt, brake_amt, self.velocity]
+
 
             self.accel = self.complex_accel_fcn.predict([model_inp])
 
@@ -177,9 +185,9 @@ class Car_Interface():
               term in acceleration.
         '''
 
-        self.position += self.velocity * self.dt + (1/2) * self.accel * self.dt * self.dt 
+        self.position += self.velocity * self.dt + (1/2) * self.accel * self.dt * self.dt
         self.velocity += self.accel * self.dt
-        
+
 
         #These ensure that the velocity is never against the current gear setting.
         if (self.gear == self.FORWARD):
