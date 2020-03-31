@@ -47,10 +47,12 @@ from gym_duckietown.envs import DuckietownEnv
 #
 #               set it to False
 # !!! YOUR CODE HERE
+time_military_split = time.ctime().split()[3].split(':')
+time_military = int(time_military_split[0] + time_military_split[1])
 env = DuckietownEnv(
-    seed=_,
-    map_name=_,
-    domain_rand=_)
+    seed=time_military,
+    map_name=args.map_name,
+    domain_rand=False)
 # !!! ==============
 
 
@@ -74,8 +76,8 @@ env.mapmode = False
 # You must use the --num-samples option to control the number of samples taken
 #
 # !!! YOUR CODE HERE
-for i in range(_):
-  camera_view = _
+for i in range(args.num_samples):
+  camera_view = env.render_obs()
   np.save(f'data/inputs/{i}.npy', camera_view)
 
   # The `env` variable has a boolean `semantic_mode` property that controls
@@ -84,10 +86,10 @@ for i in range(_):
   # Setting it to True will make the output segmented
   #
   # Turn it on *and off* when appropriate
-  _ = True
-  segmentation_view = _
+  env.semantic_mode = True
+  segmentation_view = env.render_obs()
   np.save(f'data/labels/{i}.npy', segmentation_view)
-  _ = False
+  env.semantic_mode = False
 
   # You must use the --debug option here
   if args.debug:
