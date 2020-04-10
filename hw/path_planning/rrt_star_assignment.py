@@ -52,8 +52,13 @@ def find_path(start, target, edges, radius=CAR_BUFFER, point_type='map'):
         # In the list of nodes, find the node which is closest to random_point,
         #and find the distance from this closest point to the random_point
         #Put these in minNode and dist, respectively
-        minNode=None #FIXME
-        dist=None #FIXME
+        minNode = nodes[0];
+        dist= random_point.distance(minNode) 
+
+        for node in nodes:
+            if random_point.distance(node) < dist:
+                dist = random_point.distance(node)
+                minNode = node 
 
         #if we can't connect the random_point and the node closest to it in our tree,
         #then we assume that the random_point is out of our search space and then exit
@@ -87,7 +92,11 @@ def find_path(start, target, edges, radius=CAR_BUFFER, point_type='map'):
         #If N is a better parent for the random_point, then we update random_point's parent and cost
 
         for node in X_n:
-            pass #FIXME
+            curr_cost = random_point.cost
+            new_cost = node.cost + node.distance(random_point)
+            if new_cost < curr_cost:
+                random_point.parent = node
+                random_point.cost = new_cost
 
 
         ######################################
@@ -98,7 +107,11 @@ def find_path(start, target, edges, radius=CAR_BUFFER, point_type='map'):
         #If random_point is, update the node's parent and cost accordingly
 
         for node in X_n:
-            pass #FIXME
+            curr_cost = node.cost
+            new_cost = random_point.cost + node.distance(random_point)
+            if new_cost < curr_cost:
+                node.parent = random_point
+                node.cost = new_cost
 
         #finally, we add the random_point to the list of nodes in our search space
         nodes.append(random_point)
