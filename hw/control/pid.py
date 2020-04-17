@@ -25,12 +25,19 @@ Action: [velocity, steering angle]
 '''
 class PID(ControlLoop):
 
-    def __init__(self, waypoints, dt, threshold=0.1, debug=False): # Feel free to add more arguments
+    def __init__(self, last_error1, last_error2, total_error1, total_error2, waypoints, dt, threshold=0.1, debug=False): # Feel free to add more arguments
         ControlLoop.__init__(self, waypoints=waypoints, dt=dt, threshold=threshold, debug=debug)
 
         ######################################
         #       Initialize PID constants     #
         ######################################
+        self.last_error1 = 0
+        self.last_error2 = 0
+        self.total_error1 = 0
+        self.total_error2 = 0
+
+    def distance(self, x, y):
+        return np.sqrt(np.square(x[0] - y[0]) + np.square(x[1] - y[1]))
 
     '''
     Use 2 PID loops (one for throttle, one for steering)
@@ -43,6 +50,9 @@ class PID(ControlLoop):
     def calc_action(self, state):
         cur_pos, cur_angle = state[:2], state[2]
 
+        if self.reached_waypoint(state):
+            self.next_waypoint();
+            return
         ######################################
         #       Implement PID Algorithm      #
         ######################################
@@ -65,12 +75,35 @@ class PID(ControlLoop):
         Note: Keeping error, constants, and action as 2-long np vectors will make code neat!
         Make helper functions or instance variables as needed
         '''
-        error = None
-        action = None
+        if self.last_error1 == 0 and self.last_error2 == 0:
+            self.last_error1 = self.distance(cur_pos, self.cur_waypoint)
+            self.last_error2 = cur_angle - angle_to_goal(self.cur_waypoint, cur_pos)
+            
+        error1 = self.distance(cur_pos, self.cur_waypoint)
+        derror1 = (error1 - self.last_error1)/self.dt
+        self.total_error1 += error1 * self.dt
+            
+        error2 = cur_angle - angle_to_goal(self.cur_waypoint, cur_pos)
+        derror2 = (error2 - self.last_error2)/self.dt
+        self.total_error2 += error2 * self.dt
+
+        derror1 = max(min(derror1, 1), -1)
+        derror2 = max(min(derror2, 1), -1)
+            
+        kp = 1
+        kd = 0.5
+        ki = 0.3
+        action1 = kp * error1 + kd * derror1 + ki * self.total_error1
+
+        action2 = kp * error2 + kd * derror2 + ki * self.total_error2
+
+        self.last_error1 = error1
+        self.last_error2 = error2
 
         if self.debug:
-            print("State: {}, Waypoint: {}, Action: {}".format(state, self.cur_waypoint, action))
-        return action
+            #print("State: {}, Waypoint: {}, Action: {}".format(state, self.cur_waypoint, [action1, action2]))
+            print("State: {}, Error: {}".format(state, [error1, error2]))
+        return [action1, action2]
 
     def set_waypoint(self, waypoint):
         ControlLoop.set_waypoint(self, waypoint)
@@ -82,6 +115,10 @@ class PID(ControlLoop):
         Reset PID terms each time a waypoint is set
         If not reset, derivative term will spike
         '''
+        self.last_error1 = 0
+        self.last_error2 = 0
+        self.total_error1 = 0
+        self.total_error2 = 0
 
     # Make more methods if you wish!
 
@@ -94,7 +131,8 @@ if __name__ == "__main__":
     env.render(top_down=True)
 
     # TODO: Pass any args you need
-    control_loop = PID(..., waypoints=trajectory, dt=env.delta_time, threshold=0.1, debug=True)
+    
+    control_loop = PID(0, 0, 0, 0, waypoints=trajectory, dt=env.delta_time, threshold=0.1, debug=True)
 
     while not control_loop.is_finished:
         cur_pos = [env.cur_pos[0], env.cur_pos[2]]
