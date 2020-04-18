@@ -13,9 +13,12 @@ Output:
     angle: 0-2pi
 Might be useful for PID error terms.
 '''
-def angle_to_goal(goal, pos):
+def angle_to_goal(goal, cur_pos):
     vec_to_goal = goal - cur_pos
-    return np.arctan2(-vec_to_goal[1], vec_to_goal[0]) % (2*np.pi)
+    angle = np.arctan2(-vec_to_goal[1], vec_to_goal[0]) % (2*np.pi)
+    if angle > np.pi:
+        return angle - 2*np.pi   
+    return angle
 
 '''
 ControlLoop PID Implementation
@@ -37,7 +40,7 @@ class PID(ControlLoop):
         self.total_error2 = 0
 
     def distance(self, x, y):
-        return np.sqrt(np.square(x[0] - y[0]) + np.square(x[1] - y[1]))
+        return np.sqrt(np.square(y[0] - x[0]) + np.square(y[1] - x[1]))
 
     '''
     Use 2 PID loops (one for throttle, one for steering)
@@ -50,9 +53,49 @@ class PID(ControlLoop):
     def calc_action(self, state):
         cur_pos, cur_angle = state[:2], state[2]
 
+        if cur_angle > np.pi:
+            cur_angle = cur_angle - 2*np.pi
+
+        angle = 0
+        derror1 = 0
+        derror2 = 0
+
+        action1 = 0
+        action2 = 0
+
+        kp2 = 0.5
+        kd2 = 0.05
+        ki2 = 0
+        kp1 = 1 #1 
+        kd1 = 0.8 #0.8
+        ki1 = 0
+
         if self.reached_waypoint(state):
             self.next_waypoint();
-            return
+        ##############################################################
+        elif self.last_error2 != 0 and abs(self.last_error2) < 0.005:
+            error1 = self.distance(cur_pos, self.cur_waypoint)
+            derror1 = (error1 - self.last_error1)/self.dt
+            self.total_error1 += error1 * self.dt
+
+            derror1 = max(min(derror1, 1), -1)
+            
+            action1 = kp1 * error1 + kd1 * derror1 + ki1 * self.total_error1
+
+            self.last_error1 = error1
+        else:
+            angle = angle_to_goal(self.cur_waypoint, cur_pos)
+
+            error2 = angle - cur_angle 
+            derror2 = (error2 - self.last_error2)/self.dt
+            self.total_error2 += error2 * self.dt
+
+            derror2 = max(min(derror2, 1), -1)
+
+            action2 = kp2 * error2 + kd2 * derror2 + ki2 * self.total_error2
+
+            self.last_error2 = error2
+        ###############################################################
         ######################################
         #       Implement PID Algorithm      #
         ######################################
@@ -75,35 +118,37 @@ class PID(ControlLoop):
         Note: Keeping error, constants, and action as 2-long np vectors will make code neat!
         Make helper functions or instance variables as needed
         '''
-        if self.last_error1 == 0 and self.last_error2 == 0:
-            self.last_error1 = self.distance(cur_pos, self.cur_waypoint)
-            self.last_error2 = cur_angle - angle_to_goal(self.cur_waypoint, cur_pos)
-            
+        """
         error1 = self.distance(cur_pos, self.cur_waypoint)
         derror1 = (error1 - self.last_error1)/self.dt
         self.total_error1 += error1 * self.dt
+        
+        angle = angle_to_goal(self.cur_waypoint, cur_pos)
             
-        error2 = cur_angle - angle_to_goal(self.cur_waypoint, cur_pos)
+        error2 = angle - cur_angle 
         derror2 = (error2 - self.last_error2)/self.dt
         self.total_error2 += error2 * self.dt
 
         derror1 = max(min(derror1, 1), -1)
         derror2 = max(min(derror2, 1), -1)
             
-        kp = 1
-        kd = 0.5
-        ki = 0.3
-        action1 = kp * error1 + kd * derror1 + ki * self.total_error1
+        kp1 = 1 #1 
+        kd1 = 0.8 #0.8
+        ki1 = 0
+        action1 = kp1 * error1 + kd1 * derror1 + ki1 * self.total_error1
 
-        action2 = kp * error2 + kd * derror2 + ki * self.total_error2
+        kp2 = 0.5
+        kd2 = 0.05
+        ki2 = 0
+        action2 = kp2 * error2 + kd2 * derror2 + ki2 * self.total_error2
 
         self.last_error1 = error1
         self.last_error2 = error2
-
+        """
         if self.debug:
-            #print("State: {}, Waypoint: {}, Action: {}".format(state, self.cur_waypoint, [action1, action2]))
-            print("State: {}, Error: {}".format(state, [error1, error2]))
-        return [action1, action2]
+            print("State: {}, Action: {}, Errors: {}".format([cur_angle, angle], self.cur_waypoint, [kp2*self.last_error2, kd2*derror2, ki2 * self.total_error2]))
+            #print("State: {}, Error: {}".format(state, [error1, error2]))
+        return [action1/4, action2]
 
     def set_waypoint(self, waypoint):
         ControlLoop.set_waypoint(self, waypoint)
